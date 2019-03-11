@@ -30,17 +30,20 @@ class _ImagePickerViewState extends State<ImagePickerView> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+        child: Padding(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          _image != null ? Image.file(_image) : Placeholder(
-            fallbackHeight: 300,
-          ),
+          _image != null
+              ? Image.file(_image)
+              : Placeholder(
+                  fallbackHeight: 300,
+                ),
           Flexible(
-            fit: FlexFit.tight,
+            fit: FlexFit.loose,
             child: Container(),
           ),
           RaisedButton.icon(
@@ -56,6 +59,6 @@ class _ImagePickerViewState extends State<ImagePickerView> {
         ],
       ),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    );
+    ));
   }
 }
