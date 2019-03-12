@@ -44,7 +44,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
   }
 }
 
-
 class _ImagePickerView extends StatefulWidget {
   @override
   _ImagePickerViewState createState() => _ImagePickerViewState();
@@ -74,33 +73,32 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
         child: Padding(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              _image != null
-                  ? Image.file(_image)
-                  : Placeholder(
-                fallbackHeight: 300,
-              ),
-              Flexible(
-                fit: FlexFit.loose,
-                child: Container(),
-              ),
-              RaisedButton.icon(
-                icon: Icon(Icons.photo_camera),
-                label: Text("Сделать фотографию"),
-                onPressed: _getPhotoFromCamera,
-              ),
-              RaisedButton.icon(
-                icon: Icon(Icons.photo),
-                label: Text("Выбрать из каталога"),
-                onPressed: _getImageFromPhotoLibrary,
-              ),
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          SizedBox(
+            child: _image != null ? Image.file(_image) : Placeholder(),
+            height: 300,
           ),
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        ));
+          Flexible(
+            fit: FlexFit.loose,
+            child: Container(),
+          ),
+          RaisedButton.icon(
+            icon: Icon(Icons.photo_camera),
+            label: Text("Сделать фотографию"),
+            onPressed: _getPhotoFromCamera,
+          ),
+          RaisedButton.icon(
+            icon: Icon(Icons.photo),
+            label: Text("Выбрать из каталога"),
+            onPressed: _getImageFromPhotoLibrary,
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ));
   }
 }
