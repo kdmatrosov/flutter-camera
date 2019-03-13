@@ -76,15 +76,10 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           SizedBox(
             child: _image != null ? Image.file(_image) : Placeholder(),
             height: 300,
-          ),
-          Flexible(
-            fit: FlexFit.loose,
-            child: Container(),
           ),
           RaisedButton.icon(
             icon: Icon(Icons.photo_camera),

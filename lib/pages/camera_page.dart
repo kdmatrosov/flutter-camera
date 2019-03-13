@@ -38,7 +38,7 @@ class _CameraPageState extends State<CameraPage> {
         appBar: AppBar(
           title: Text(widget.title),
         ),
-        body: Center(child: _CameraView()));
+        body: _CameraView());
   }
 }
 
@@ -50,6 +50,7 @@ class _CameraView extends StatefulWidget {
 class _CameraViewState extends State<_CameraView> {
   List<CameraDescription> _cameras;
   CameraController _controller;
+  CameraLensDirection _cameraLensDirection;
 
   @override
   void initState() {
@@ -60,13 +61,10 @@ class _CameraViewState extends State<_CameraView> {
   Future<void> _getAvailableCameras() async {
     try {
       final cameras = await availableCameras();
-      print("cameras ${cameras.length}");
-      cameras.forEach((c) {
-        print(c.name);
-      });
       setState(() {
         _cameras = cameras;
         _controller = CameraController(cameras[0], ResolutionPreset.medium);
+        _cameraLensDirection = _controller.description.lensDirection;
         _controller.initialize().then((_) {
           if (!mounted) {
             return;
@@ -85,13 +83,56 @@ class _CameraViewState extends State<_CameraView> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _cameraView() {
     if (_controller == null || !_controller.value.isInitialized) {
-      return Container();
+      return Placeholder();
     }
     return AspectRatio(
         aspectRatio: _controller.value.aspectRatio,
         child: CameraPreview(_controller));
+  }
+
+  void _takePhoto() {}
+
+  IconData _getCameraLensIcon(CameraLensDirection direction) {
+    switch (direction) {
+      case CameraLensDirection.back:
+        return Icons.camera_rear;
+      case CameraLensDirection.front:
+        return Icons.camera_front;
+      case CameraLensDirection.external:
+        return Icons.camera;
+    }
+    throw ArgumentError('Unknown lens direction');
+  }
+
+  Widget _lensControl() {
+    return RaisedButton(
+      child: Text(""),
+      onPressed: null,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+        child: Padding(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          SizedBox(
+            child: _cameraView(),
+            height: 300,
+          ),
+          RaisedButton.icon(
+            icon: Icon(Icons.photo_camera),
+            label: Text("Сделать фотографию"),
+            onPressed: null,
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ));
   }
 }
