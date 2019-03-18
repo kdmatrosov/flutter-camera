@@ -208,9 +208,8 @@ class _CameraViewState extends State<_CameraView> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          SizedBox(
-            child: _cameraView(),
-            height: 300,
+          Center(
+            child: SizedBox(child: _cameraView(), height: 300),
           ),
           _getActiveCamera(),
           _cameraListWidget(),
