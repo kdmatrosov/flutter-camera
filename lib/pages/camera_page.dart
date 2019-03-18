@@ -184,9 +184,7 @@ class _CameraViewState extends State<_CameraView> {
         child: Text(
           _activeCamera == null
               ? "Выберите камеру"
-              : _getLensDirectionText(_activeCamera.lensDirection) +
-                  ' ' +
-                  _activeCamera.name,
+              : "${_getLensDirectionText(_activeCamera.lensDirection)} ${_activeCamera.name}",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ));
   }

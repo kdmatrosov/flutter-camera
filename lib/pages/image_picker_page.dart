@@ -58,6 +58,7 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
 
   Future<void> _getImage(ImageSource source, BuildContext context) async {
     try {
+      print(source);
       final File file = await ImagePicker.pickImage(source: source);
       setState(() {
         _image = file;
@@ -69,14 +70,16 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
   }
 
   void _showBottomSheet(context) {
-    showModalBottomSheet(
-        context: context,
-        builder: (BuildContext bc) {
-          return LimitedBox(
-            child: Image.file(_image),
-            maxHeight: 300,
-          );
-        });
+    if (_image != null) {
+      showModalBottomSheet(
+          context: context,
+          builder: (BuildContext bc) {
+            return LimitedBox(
+              child: Image.file(_image),
+              maxHeight: 300,
+            );
+          });
+    }
   }
 
   @override
