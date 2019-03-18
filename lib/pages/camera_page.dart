@@ -251,7 +251,7 @@ class _CameraViewState extends State<_CameraView> {
 
   String get buttonText => !_isVideo
       ? "Сделать фотографию"
-      : "${_controller.value.isRecordingVideo ? "Остановить запись" : "Записать видео"}";
+      : "${_controller != null && _controller.value.isRecordingVideo ? "Остановить запись" : "Записать видео"}";
 
   IconData get buttonIcon => !_isVideo ? Icons.photo_camera : Icons.videocam;
 
