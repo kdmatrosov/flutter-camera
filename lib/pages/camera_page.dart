@@ -46,7 +46,7 @@ class _CameraView extends StatefulWidget {
 class _CameraViewState extends State<_CameraView> {
   List<CameraDescription> _cameras;
   CameraController _controller;
-  CameraLensDirection _cameraLensDirection;
+  CameraDescription _activeCamera;
 
   @override
   void initState() {
@@ -60,13 +60,6 @@ class _CameraViewState extends State<_CameraView> {
       setState(() {
         _cameras = cameras;
         _controller = CameraController(cameras[0], ResolutionPreset.medium);
-        _cameraLensDirection = _controller.description.lensDirection;
-        _controller.initialize().then((_) {
-          if (!mounted) {
-            return;
-          }
-          setState(() {});
-        });
       });
     } catch (e) {
       print("_getAvailableCameras $e");
@@ -102,11 +95,82 @@ class _CameraViewState extends State<_CameraView> {
     throw ArgumentError('Unknown lens direction');
   }
 
-  Widget _lensControl() {
+  String _getLensDirectionText(CameraLensDirection lensDirection) {
+    switch (lensDirection) {
+      case CameraLensDirection.back:
+        return "Задняя";
+        break;
+      case CameraLensDirection.front:
+        return "Фронтальная";
+        break;
+      case CameraLensDirection.external:
+        return "Внешняя";
+        break;
+    }
+  }
+
+  Widget _lensControl(CameraDescription cameraDescription) {
+    String text = _getLensDirectionText(cameraDescription.lensDirection);
     return RaisedButton(
-      child: Text(""),
-      onPressed: null,
+      child: Text("$text ${cameraDescription.name}"),
+      onPressed: () {
+        setState(() {
+          _activeCamera = cameraDescription;
+          _setCameraController(cameraDescription);
+        });
+      },
     );
+  }
+
+  void _setCameraController(CameraDescription cameraDescription) async {
+    if (_controller != null) {
+      await _controller.dispose();
+    }
+    _controller = CameraController(cameraDescription, ResolutionPreset.medium);
+
+    // If the controller is updated then update the UI.
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    try {
+      await _controller.initialize();
+    } on CameraException catch (e) {
+      print(e);
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Widget _cameraListWidget() {
+    final List<Widget> cameras = <Widget>[];
+    if (_cameras == null || _cameras.isEmpty) {
+      return Text('Камеры не обнаружены');
+    } else {
+      for (CameraDescription cameraDescription in _cameras) {
+        cameras.add(_lensControl(cameraDescription));
+      }
+    }
+
+    return Flexible(
+        fit: FlexFit.loose,
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch, children: cameras));
+  }
+
+  Widget _getActiveCamera() {
+    return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          _activeCamera == null
+              ? "Выберите камеру"
+              : _getLensDirectionText(_activeCamera.lensDirection) +
+                  ' ' +
+                  _activeCamera.name,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ));
   }
 
   @override
@@ -121,10 +185,12 @@ class _CameraViewState extends State<_CameraView> {
             child: _cameraView(),
             height: 300,
           ),
+          _getActiveCamera(),
+          _cameraListWidget(),
           RaisedButton.icon(
             icon: Icon(Icons.photo_camera),
             label: Text("Сделать фотографию"),
-            onPressed: null,
+            onPressed: _activeCamera == null ? null : _takePhoto,
           ),
         ],
       ),
