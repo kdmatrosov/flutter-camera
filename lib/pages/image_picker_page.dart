@@ -19,25 +19,21 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            AppBar(
-              automaticallyImplyLeading: false,
-              title: Text('Choose plugin'),
-            ),
-            ListTile(
-              title: Text('сamera'),
-              onTap: () {
-                Navigator.pushReplacementNamed(context, CameraPage.pageRoute);
-              },
-            ),
-          ],
-        ),
-      ),
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          Center(
+              child: GestureDetector(
+            child: Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: Text(
+                  'сamera',
+                )),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, CameraPage.pageRoute);
+            },
+          ))
+        ],
       ),
       body: _ImagePickerView(),
     );

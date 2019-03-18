@@ -17,26 +17,22 @@ class _CameraPageState extends State<CameraPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              AppBar(
-                automaticallyImplyLeading: false,
-                title: Text('Choose plugin'),
-              ),
-              ListTile(
-                title: Text('image-picker'),
-                onTap: () {
-                  Navigator.pushReplacementNamed(
-                      context, ImagePickerPage.pageRoute);
-                },
-              ),
-            ],
-          ),
-        ),
         appBar: AppBar(
           title: Text(widget.title),
+          actions: <Widget>[
+            Center(
+                child: GestureDetector(
+              child: Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: Text(
+                    'image-picker',
+                  )),
+              onTap: () {
+                Navigator.pushReplacementNamed(
+                    context, ImagePickerPage.pageRoute);
+              },
+            ))
+          ],
         ),
         body: _CameraView());
   }
