@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_camera/pages/image_picker_page.dart';
+import 'package:flutter_camera/widgets/video.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CameraPage extends StatefulWidget {
@@ -50,7 +51,8 @@ class _CameraViewState extends State<_CameraView> {
   List<CameraDescription> _cameras;
   CameraController _controller;
   CameraDescription _activeCamera;
-  String _photoPath;
+  String _filePath;
+  bool _isVideo = false;
 
   @override
   void initState() {
@@ -63,7 +65,6 @@ class _CameraViewState extends State<_CameraView> {
       final cameras = await availableCameras();
       setState(() {
         _cameras = cameras;
-        _controller = CameraController(cameras[0], ResolutionPreset.medium);
       });
     } catch (e) {
       print("_getAvailableCameras $e");
@@ -78,11 +79,21 @@ class _CameraViewState extends State<_CameraView> {
 
   Widget _cameraView() {
     if (_controller == null || !_controller.value.isInitialized) {
-      return Placeholder();
+      return _activeCamera == null ? Placeholder() : Container();
     }
-    return AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
-        child: CameraPreview(_controller));
+    return Center(
+        child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+                border: Border.all(
+              color: _controller != null && _controller.value.isRecordingVideo
+                  ? Colors.redAccent
+                  : Colors.transparent,
+              width: 1.0,
+            )),
+            child: AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: CameraPreview(_controller))));
   }
 
   String _getTimestamp() => DateTime.now().millisecondsSinceEpoch.toString();
@@ -104,7 +115,43 @@ class _CameraViewState extends State<_CameraView> {
     try {
       await _controller.takePicture(filePath);
       setState(() {
-        _photoPath = filePath;
+        _filePath = filePath;
+        _showBottomSheet(context);
+      });
+    } on CameraException catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _startVideoRecording() async {
+    final Directory extDir = await getApplicationDocumentsDirectory();
+    final String dirPath = '${extDir.path}/Movies/flutter_camera';
+    await Directory(dirPath).create(recursive: true);
+    final String filePath = '$dirPath/${_getTimestamp()}.mp4';
+
+    if (_controller.value.isRecordingVideo) {
+      // A recording is already started, do nothing.
+      return null;
+    }
+
+    try {
+      await _controller.startVideoRecording(filePath);
+      setState(() {
+        _filePath = filePath;
+      });
+    } on CameraException catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _stopVideoRecording(BuildContext context) async {
+    if (!_controller.value.isRecordingVideo) {
+      return null;
+    }
+
+    try {
+      await _controller.stopVideoRecording();
+      setState(() {
         _showBottomSheet(context);
       });
     } on CameraException catch (e) {
@@ -193,12 +240,20 @@ class _CameraViewState extends State<_CameraView> {
     showModalBottomSheet(
         context: context,
         builder: (BuildContext bc) {
-          return LimitedBox(
-            child: Image.file(File(_photoPath)),
+          return Center(
+              child: LimitedBox(
+            child:
+                _isVideo ? Video(File(_filePath)) : Image.file(File(_filePath)),
             maxHeight: 300,
-          );
+          ));
         });
   }
+
+  String get buttonText => !_isVideo
+      ? "Сделать фотографию"
+      : "${_controller.value.isRecordingVideo ? "Остановить запись" : "Записать видео"}";
+
+  IconData get buttonIcon => !_isVideo ? Icons.photo_camera : Icons.videocam;
 
   @override
   Widget build(BuildContext context) {
@@ -208,20 +263,41 @@ class _CameraViewState extends State<_CameraView> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Center(
-            child: SizedBox(child: _cameraView(), height: 300),
-          ),
+          SizedBox(child: _cameraView(), height: 300),
           _getActiveCamera(),
           _cameraListWidget(),
           RaisedButton.icon(
-            icon: Icon(Icons.photo_camera),
-            label: Text("Сделать фотографию"),
+            icon: Icon(buttonIcon),
+            label: Text(buttonText),
             onPressed: _activeCamera == null
                 ? null
                 : () {
-                    _takePhoto(context);
+                    if (_isVideo) {
+                      if (_controller.value.isRecordingVideo) {
+                        _stopVideoRecording(context);
+                      } else {
+                        _startVideoRecording();
+                      }
+                    } else {
+                      _takePhoto(context);
+                    }
                   },
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text('Фото'),
+              Switch(
+                onChanged: (bool value) {
+                  setState(() {
+                    _isVideo = value;
+                  });
+                },
+                value: _isVideo,
+              ),
+              Text('Видео'),
+            ],
+          )
         ],
       ),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
