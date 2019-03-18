@@ -48,21 +48,35 @@ class _ImagePickerView extends StatefulWidget {
 class _ImagePickerViewState extends State<_ImagePickerView> {
   File _image;
 
-  void _getImageFromPhotoLibrary() {
-    _getImage(ImageSource.gallery);
+  void _getImageFromPhotoLibrary(context) {
+    _getImage(ImageSource.gallery, context);
   }
 
-  void _getPhotoFromCamera() {
-    _getImage(ImageSource.camera);
+  void _getPhotoFromCamera(context) {
+    _getImage(ImageSource.camera, context);
   }
 
-  Future<void> _getImage(ImageSource source) async {
+  Future<void> _getImage(ImageSource source, BuildContext context) async {
     try {
       final File file = await ImagePicker.pickImage(source: source);
-      setState(() => _image = file);
+      setState(() {
+        _image = file;
+        _showBottomSheet(context);
+      });
     } catch (e) {
       print(e);
     }
+  }
+
+  void _showBottomSheet(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return LimitedBox(
+            child: Image.file(_image),
+            maxHeight: 300,
+          );
+        });
   }
 
   @override
@@ -73,19 +87,19 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          SizedBox(
-            child: _image != null ? Image.file(_image) : Placeholder(),
-            height: 300,
-          ),
           RaisedButton.icon(
             icon: Icon(Icons.photo_camera),
             label: Text("Сделать фотографию"),
-            onPressed: _getPhotoFromCamera,
+            onPressed: () {
+              _getPhotoFromCamera(context);
+            },
           ),
           RaisedButton.icon(
             icon: Icon(Icons.photo),
             label: Text("Выбрать из каталога"),
-            onPressed: _getImageFromPhotoLibrary,
+            onPressed: () {
+              _getImageFromPhotoLibrary(context);
+            },
           ),
         ],
       ),

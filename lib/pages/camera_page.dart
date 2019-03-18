@@ -195,8 +195,9 @@ class _CameraViewState extends State<_CameraView> {
     showModalBottomSheet(
         context: context,
         builder: (BuildContext bc) {
-          return Container(
+          return LimitedBox(
             child: Image.file(File(_photoPath)),
+            maxHeight: 300,
           );
         });
   }
