@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_camera/pages/image_picker_page.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CameraPage extends StatefulWidget {
   static final String pageRoute = "/";
@@ -47,6 +50,7 @@ class _CameraViewState extends State<_CameraView> {
   List<CameraDescription> _cameras;
   CameraController _controller;
   CameraDescription _activeCamera;
+  String _photoPath;
 
   @override
   void initState() {
@@ -81,18 +85,31 @@ class _CameraViewState extends State<_CameraView> {
         child: CameraPreview(_controller));
   }
 
-  void _takePhoto() {}
+  String _getTimestamp() => DateTime.now().millisecondsSinceEpoch.toString();
 
-  IconData _getCameraLensIcon(CameraLensDirection direction) {
-    switch (direction) {
-      case CameraLensDirection.back:
-        return Icons.camera_rear;
-      case CameraLensDirection.front:
-        return Icons.camera_front;
-      case CameraLensDirection.external:
-        return Icons.camera;
+  Future<void> _takePhoto(BuildContext context) async {
+    if (!_controller.value.isInitialized) {
+      return null;
     }
-    throw ArgumentError('Unknown lens direction');
+    final Directory extDir = await getApplicationDocumentsDirectory();
+    final String dirPath = '${extDir.path}/Pictures/flutter_camera';
+    await Directory(dirPath).create(recursive: true);
+    final String filePath = '$dirPath/${_getTimestamp()}.jpg';
+
+    if (_controller.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return null;
+    }
+
+    try {
+      await _controller.takePicture(filePath);
+      setState(() {
+        _photoPath = filePath;
+        _showBottomSheet(context);
+      });
+    } on CameraException catch (e) {
+      print(e);
+    }
   }
 
   String _getLensDirectionText(CameraLensDirection lensDirection) {
@@ -107,6 +124,7 @@ class _CameraViewState extends State<_CameraView> {
         return "Внешняя";
         break;
     }
+    return '';
   }
 
   Widget _lensControl(CameraDescription cameraDescription) {
@@ -173,6 +191,16 @@ class _CameraViewState extends State<_CameraView> {
         ));
   }
 
+  void _showBottomSheet(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return Container(
+            child: Image.file(File(_photoPath)),
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -190,7 +218,11 @@ class _CameraViewState extends State<_CameraView> {
           RaisedButton.icon(
             icon: Icon(Icons.photo_camera),
             label: Text("Сделать фотографию"),
-            onPressed: _activeCamera == null ? null : _takePhoto,
+            onPressed: _activeCamera == null
+                ? null
+                : () {
+                    _takePhoto(context);
+                  },
           ),
         ],
       ),
