@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_camera/pages/camera_page.dart';
+import 'package:flutter_camera/widgets/video.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImagePickerPage extends StatefulWidget {
@@ -46,22 +47,25 @@ class _ImagePickerView extends StatefulWidget {
 }
 
 class _ImagePickerViewState extends State<_ImagePickerView> {
-  File _image;
+  File _file;
+  bool _isVideo = false;
 
   void _getImageFromPhotoLibrary(context) {
-    _getImage(ImageSource.gallery, context);
+    _getFile(ImageSource.gallery, context);
   }
 
-  void _getPhotoFromCamera(context) {
-    _getImage(ImageSource.camera, context);
+  void _getFromCamera(context) {
+    _getFile(ImageSource.camera, context);
   }
 
-  Future<void> _getImage(ImageSource source, BuildContext context) async {
+  Future<void> _getFile(ImageSource source, BuildContext context) async {
     try {
       print(source);
-      final File file = await ImagePicker.pickImage(source: source);
+      final File file = _isVideo
+          ? await ImagePicker.pickVideo(source: source)
+          : await ImagePicker.pickImage(source: source);
       setState(() {
-        _image = file;
+        _file = file;
         _showBottomSheet(context);
       });
     } catch (e) {
@@ -70,17 +74,22 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
   }
 
   void _showBottomSheet(context) {
-    if (_image != null) {
+    if (_file != null) {
       showModalBottomSheet(
           context: context,
           builder: (BuildContext bc) {
-            return LimitedBox(
-              child: Image.file(_image),
+            return Center(
+                child: LimitedBox(
+              child: _isVideo ? Video(_file) : Image.file(_file),
               maxHeight: 300,
-            );
+            ));
           });
     }
   }
+
+  String get buttonText => !_isVideo ? "Сделать фотографию" : "Записать видео";
+
+  IconData get buttonIcon => !_isVideo ? Icons.photo_camera : Icons.videocam;
 
   @override
   Widget build(BuildContext context) {
@@ -91,10 +100,10 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           RaisedButton.icon(
-            icon: Icon(Icons.photo_camera),
-            label: Text("Сделать фотографию"),
+            icon: Icon(buttonIcon),
+            label: Text(buttonText),
             onPressed: () {
-              _getPhotoFromCamera(context);
+              _getFromCamera(context);
             },
           ),
           RaisedButton.icon(
@@ -104,6 +113,21 @@ class _ImagePickerViewState extends State<_ImagePickerView> {
               _getImageFromPhotoLibrary(context);
             },
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text('Фото'),
+              Switch(
+                onChanged: (bool value) {
+                  setState(() {
+                    _isVideo = value;
+                  });
+                },
+                value: _isVideo,
+              ),
+              Text('Видео'),
+            ],
+          )
         ],
       ),
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
